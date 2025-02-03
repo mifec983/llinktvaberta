@@ -29,23 +29,46 @@
 <script>
     var video = document.getElementById('video');
 
-    function iniciarVideo() {
-        setTimeout(() => {
-            video.play().catch(error => console.log("Erro ao iniciar o vídeo:", error));
-        }, 500); // Dá um pequeno tempo para o vídeo carregar antes de tentar iniciar
+    function tentarReproducao() {
+        video.play().then(() => {
+            console.log("Vídeo reproduzido com sucesso!");
+        }).catch(error => {
+            console.log("Reprodução bloqueada, aguardando interação...");
+        });
     }
 
     if (Hls.isSupported()) {
         var hls = new Hls();
         hls.loadSource('https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8');
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, iniciarVideo);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            setTimeout(tentarReproducao, 100); // Pequeno delay antes de tentar iniciar
+        });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = 'https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8';
-        video.addEventListener('loadedmetadata', iniciarVideo);
+        video.addEventListener('loadedmetadata', function() {
+            setTimeout(tentarReproducao, 100);
+        });
     } else {
         alert('Seu navegador não suporta reprodução de vídeo HLS.');
     }
+
+    // Caso a TV bloqueie, tenta rodar ao ganhar foco
+    document.addEventListener("visibilitychange", function() {
+        if (!document.hidden) {
+            tentarReproducao();
+        }
+    });
+
+    // Se o usuário pressionar qualquer tecla no controle remoto, inicia o vídeo
+    document.addEventListener("keydown", function(event) {
+        tentarReproducao();
+    });
+
+    // Se o app ganhar foco novamente, tenta iniciar
+    window.addEventListener("focus", function() {
+        tentarReproducao();
+    });
 </script>
 
 </body>
