@@ -25,23 +25,28 @@
 <body>
   
 <video id="video" controls autoplay></video>
+
 <script>
     var video = document.getElementById('video');
+
+    function iniciarVideo() {
+        setTimeout(() => {
+            video.play().catch(error => console.log("Erro ao iniciar o vídeo:", error));
+        }, 500); // Dá um pequeno tempo para o vídeo carregar antes de tentar iniciar
+    }
+
     if (Hls.isSupported()) {
         var hls = new Hls();
         hls.loadSource('https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8');
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
-        });
+        hls.on(Hls.Events.MANIFEST_PARSED, iniciarVideo);
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = 'https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8';
-        video.addEventListener('loadedmetadata', function() {
-            video.play();
-        });
+        video.addEventListener('loadedmetadata', iniciarVideo);
     } else {
         alert('Seu navegador não suporta reprodução de vídeo HLS.');
     }
 </script>
+
 </body>
 </html>
