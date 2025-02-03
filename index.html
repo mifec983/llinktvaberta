@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reprodução HLS</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    video {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  
+<video id="video" autoplay></video> <!-- Removido "controls" para evitar bloqueios -->
+
+<script>
+    var video = document.getElementById('video');
+    var tentativaAutoplay;
+
+    function tentarReproducao() {
+        video.play().then(() => {
+            console.log("Vídeo reproduzido com sucesso!");
+            clearInterval(tentativaAutoplay); // Para as tentativas quando o vídeo começa a tocar
+        }).catch(error => {
+            console.log("Tentando iniciar o vídeo novamente...");
+        });
+    }
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource('https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8');
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            tentativaAutoplay = setInterval(tentarReproducao, 1000); // Tenta iniciar a cada 1 segundo
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = 'https://br5093.streamingdevideo.com.br:443/tvaberto/tvaberto/playlist.m3u8';
+        video.addEventListener('loadedmetadata', function() {
+            tentativaAutoplay = setInterval(tentarReproducao, 1000);
+        });
+    } else {
+        alert('Seu navegador não suporta reprodução de vídeo HLS.');
+    }
+
+    // Caso a TV bloqueie, tenta rodar ao ganhar foco
+    document.addEventListener("visibilitychange", function() {
+        if (!document.hidden) {
+            tentarReproducao();
+        }
+    });
+
+    // Se o usuário pressionar qualquer tecla no controle remoto, inicia o vídeo
+    document.addEventListener("keydown", function(event) {
+        tentarReproducao();
+    });
+
+    // Se o app ganhar foco novamente, tenta iniciar
+    window.addEventListener("focus", function() {
+        tentarReproducao();
+    });
+
+</script>
+
+</body>
+</html>
 
